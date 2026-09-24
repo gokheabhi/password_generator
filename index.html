@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Password Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1418;
+    --panel: #141d22;
+    --panel-2: #1a252b;
+    --line: #26333a;
+    --text: #e7eef0;
+    --muted: #7f95a0;
+    --accent: #5ee6c4;
+    --accent-dim: #2c4a44;
+    --warn: #e6a15e;
+  }
+  :root:not([data-theme="light"]) { color-scheme: dark; }
+  :root[data-theme="light"] {
+    --bg: #f3f6f5;
+    --panel: #ffffff;
+    --panel-2: #eef2f1;
+    --line: #d7e0de;
+    --text: #10201d;
+    --muted: #5a6d68;
+    --accent: #128a6f;
+    --accent-dim: #cdece4;
+    --warn: #b3691e;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    padding-top: calc(32px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+    transition: background .2s, color .2s;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 30px 28px 26px;
+  }
+
+  .top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+
+  h1 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .theme-toggle {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 7px;
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    font-family: inherit;
+    cursor: pointer;
+  }
+
+  p.sub {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin: 0 0 24px;
+    line-height: 1.5;
+  }
+
+  .display {
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  #pw-output {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    word-break: break-all;
+    line-height: 1.3;
+  }
+
+  .icon-btn {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 7px;
+    display: flex;
+  }
+  .icon-btn:hover { color: var(--text); background: var(--line); }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  .copied-note {
+    font-size: 0.75rem;
+    color: var(--accent);
+    height: 16px;
+    margin-bottom: 18px;
+    opacity: 0;
+    transition: opacity .15s;
+  }
+  .copied-note.show { opacity: 1; }
+
+  .section-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.01em;
+  }
+
+  .length-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+
+  .len-btn {
+    flex: 1;
+    background: var(--panel-2);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 9px 0;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .len-btn.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  .opts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px 14px;
+    margin-bottom: 24px;
+  }
+
+  .opt {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: var(--text);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .opt input { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+
+  .warn {
+    font-size: 0.78rem;
+    color: var(--warn);
+    margin: -14px 0 18px;
+    min-height: 16px;
+  }
+
+  .regen {
+    width: 100%;
+    background: var(--accent);
+    color: #06231d;
+    border: none;
+    padding: 13px 0;
+    border-radius: 9px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: transform .08s, filter .15s;
+  }
+  .regen:hover { filter: brightness(1.08); }
+  .regen:active { transform: scale(0.98); }
+  .regen svg { width: 17px; height: 17px; }
+  .regen.spin svg { animation: spin .5s ease; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(180deg); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .regen.spin svg { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="top-row">
+    <h1>Password generator</h1>
+    <button class="theme-toggle" id="themeToggle" type="button">Light</button>
+  </div>
+  <p class="sub">Pick a length and a character mix, then generate. Nothing here leaves your browser.</p>
+
+  <div class="display">
+    <div id="pw-output">—</div>
+    <div style="display:flex; gap:2px;">
+      <button class="icon-btn" id="copyBtn" type="button" aria-label="Copy password" title="Copy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="copied-note" id="copiedNote">Copied to clipboard</div>
+
+  <div class="section-label">Length</div>
+  <div class="length-row" id="lengthRow">
+    <button class="len-btn active" data-len="5" type="button">5</button>
+    <button class="len-btn" data-len="6" type="button">6</button>
+    <button class="len-btn" data-len="8" type="button">8</button>
+  </div>
+
+  <div class="section-label">Characters</div>
+  <div class="opts">
+    <label class="opt"><input type="checkbox" id="lower" checked> Lowercase (a-z)</label>
+    <label class="opt"><input type="checkbox" id="upper" checked> Uppercase (A-Z)</label>
+    <label class="opt"><input type="checkbox" id="numbers" checked> Numbers (0-9)</label>
+    <label class="opt"><input type="checkbox" id="symbols" checked> Symbols (!@#$)</label>
+  </div>
+  <div class="warn" id="warnMsg"></div>
+
+  <button class="regen" id="regenBtn" type="button">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+    Regenerate
+  </button>
+</div>
+
+<script>
+  const LOWER = 'abcdefghijklmnopqrstuvwxyz';
+  const UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const NUMS  = '0123456789';
+  const SYMS  = '!@#$%^&*()-_=+?';
+
+  let length = 5;
+  const lenRow = document.getElementById('lengthRow');
+  const output = document.getElementById('pw-output');
+  const warnMsg = document.getElementById('warnMsg');
+  const regenBtn = document.getElementById('regenBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const copiedNote = document.getElementById('copiedNote');
+  const checks = {
+    lower: document.getElementById('lower'),
+    upper: document.getElementById('upper'),
+    numbers: document.getElementById('numbers'),
+    symbols: document.getElementById('symbols'),
+  };
+
+  lenRow.addEventListener('click', (e) => {
+    const btn = e.target.closest('.len-btn');
+    if (!btn) return;
+    lenRow.querySelectorAll('.len-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    length = parseInt(btn.dataset.len, 10);
+    generate();
+  });
+
+  Object.values(checks).forEach(cb => cb.addEventListener('change', generate));
+
+  function activePools() {
+    const pools = [];
+    if (checks.lower.checked) pools.push(LOWER);
+    if (checks.upper.checked) pools.push(UPPER);
+    if (checks.numbers.checked) pools.push(NUMS);
+    if (checks.symbols.checked) pools.push(SYMS);
+    return pools;
+  }
+
+  function randInt(max) {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return arr[0] % max;
+  }
+
+  function generate() {
+    const pools = activePools();
+    if (pools.length === 0) {
+      output.textContent = '—';
+      warnMsg.textContent = 'Select at least one character type.';
+      return;
+    }
+    if (pools.length > length) {
+      warnMsg.textContent = `With ${pools.length} types selected, try a length of at least ${pools.length}.`;
+    } else {
+      warnMsg.textContent = '';
+    }
+
+    const all = pools.join('');
+    let pwChars = [];
+
+    // guarantee one char from each selected pool, if length allows
+    const guaranteed = pools.slice(0, length).map(pool => pool[randInt(pool.length)]);
+    pwChars.push(...guaranteed);
+
+    while (pwChars.length < length) {
+      pwChars.push(all[randInt(all.length)]);
+    }
+
+    // shuffle
+    for (let i = pwChars.length - 1; i > 0; i--) {
+      const j = randInt(i + 1);
+      [pwChars[i], pwChars[j]] = [pwChars[j], pwChars[i]];
+    }
+
+    output.textContent = pwChars.join('');
+  }
+
+  regenBtn.addEventListener('click', () => {
+    regenBtn.classList.remove('spin');
+    void regenBtn.offsetWidth;
+    regenBtn.classList.add('spin');
+    generate();
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    const text = output.textContent;
+    if (!text || text === '—') return;
+    try {
+      await navigator.clipboard.writeText(text);
+      copiedNote.classList.add('show');
+      setTimeout(() => copiedNote.classList.remove('show'), 1400);
+    } catch (e) {
+      copiedNote.textContent = 'Could not copy';
+      copiedNote.classList.add('show');
+    }
+  });
+
+  const themeToggle = document.getElementById('themeToggle');
+  themeToggle.addEventListener('click', () => {
+    const root = document.documentElement;
+    const isLight = root.getAttribute('data-theme') === 'light';
+    root.setAttribute('data-theme', isLight ? 'dark' : 'light');
+    themeToggle.textContent = isLight ? 'Light' : 'Dark';
+  });
+
+  generate();
+</script>
+</body>
+</html>
